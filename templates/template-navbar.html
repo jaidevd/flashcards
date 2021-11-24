@@ -1,0 +1,36 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-light py-0 px-2">
+  <a class="navbar-brand" href="{{ base }}">
+    <!-- Replace with your logo. Just specify height, not width. -->
+    <img height="36" src="/static/IITMOD-Logo.svg" alt="Logo">
+    <span class="text-uppercase px-3">Learn Faster with Flashcards!</span>
+  </a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <!-- Navbar middle -->
+    {% set navlink_enabled = "disabled" if not current_user.is_authenticated else "" %}
+    <div class="navbar-nav mr-auto">
+      <span class="nav-item nav-link active mb-0 {{ navlink_enabled }}">My Decks</span>
+    </div>
+    <div class="navbar-nav mr-auto">
+      <span class="nav-item nav-link active mb-0 {{ navlink_enabled }}">Create a Deck</span>
+    </div>
+    <div class="navbar-nav mr-auto">
+      <span class="nav-item nav-link active mb-0 {{ navlink_enabled }}">Add a Card</span>
+    </div>
+    <!-- Navbar right -->
+    <div class="navbar-nav mr-sm-2">
+      {% if current_user.is_authenticated %}
+        <a class="nav-item nav-link" href="{{ base }}/login/" title="Log in again" data-placement="bottom">
+          {{ current_user.user_id }}
+        </a>
+        <a class="nav-item nav-link" href="{{ base }}/logout/" title="Log out" data-placement="bottom"><span class="fas fa-arrow-right bg-light round text-dark p-1"></span></a>
+      {% else %}
+        <a class="nav-item nav-link" href="{{ base }}/login/" title="Log in again" data-placement="bottom">
+          Log in
+        </a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
