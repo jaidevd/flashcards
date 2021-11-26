@@ -27,6 +27,16 @@ class User(db.Model):
         return True
 
 
+class Cards(db.Model):
+    __tablename__ = "cards"
+    id = db.Column(db.Integer, primary_key=True, unique=True, nullable=False)
+    user = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    front = db.Column(db.String(), nullable=False)
+    back = db.Column(db.String(), nullable=False)
+    image = db.Column(db.String())
+    tags = db.Column(db.String())
+
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.filter_by(user_id=user_id).first()
@@ -51,6 +61,15 @@ def login():
             abort(403, "Incorrect password.")
         login_user(user)
         return redirect(url_for("index"))
+
+
+@app.route("/card/<string:card_id>", methods=["GET", "POST"])
+def card(card_id):
+    if request.method == "GET":
+        if card_id == "create":
+            return render_template("create-card.html")
+        card_data = Cards.query.filter_by(card_id=int(card_id))
+        return render_template("card.html", card_data)
 
 
 if __name__ == "__main__":
