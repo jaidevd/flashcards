@@ -16,3 +16,16 @@
 .back {
   transform: rotateY(180deg)
 }
+
+.droppable {
+  height: 300px
+}
+
+.cardicon {
+  height: 20%;
+  width: 20%:
+}
+
+.addplus {
+  cursor: copy
+}

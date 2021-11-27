@@ -1,4 +1,5 @@
 import os
+import json
 from flask import (
     Flask,
     render_template,
@@ -55,6 +56,20 @@ class Cards(db.Model):
     tags = db.Column(db.String())
 
 
+class Decks(db.Model):
+    __tablename__ = 'decks'
+    id = db.Column(db.Integer, primary_key=True, unique=True, nullable=False)
+    name = db.Column(db.String(), nullable=False)
+    user = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+
+
+class DeckCard(db.Model):
+    __tablename__ = 'deckcard'
+    id = db.Column(db.Integer, primary_key=True, unique=True, nullable=False)
+    deck = db.Column(db.Integer, db.ForeignKey('decks.id'), nullable=False)
+    card = db.Column(db.Integer, db.ForeignKey('cards.id'), nullable=False)
+
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.filter_by(user_id=user_id).first()
@@ -63,7 +78,8 @@ def load_user(user_id):
 @app.route("/")
 def index():
     cards = Cards.query.filter_by(user=current_user.id)
-    return render_template("index.html", cards=cards)
+    decks = Decks.query.filter_by(user=current_user.id)
+    return render_template("index.html", cards=cards, decks=decks)
 
 
 @app.route("/login/", methods=["GET", "POST"])
@@ -116,6 +132,26 @@ def card(card_id):
         db.session.add(card)
         db.session.commit()
         return redirect("/card/create")
+
+
+@app.route('/deck/', defaults={'deck_id': ''}, methods=['POST', 'GET'])
+@app.route('/deck/<int:deck_id>')
+def deck(deck_id):
+    if request.method == 'POST':
+        deck = Decks(name=request.form['deckname'], user=current_user.id)
+        db.session.add(deck)
+        db.session.commit()
+
+        # Add cards to deck
+        for card in json.loads(request.form['cards']):
+            card_id = int(card.split('-')[-1])
+            card = Cards.query.get(card_id)
+            if card is None:
+                abort(404, f'Card with id {card_id} not found.')
+            deckcard = DeckCard(deck=deck.id, card=card.id)
+            db.session.add(deckcard)
+            db.session.commit()
+        return redirect('/')
 
 
 if __name__ == "__main__":
