@@ -29,3 +29,7 @@
 .addplus {
   cursor: copy
 }
+
+.cardcol {
+  max-height: 50vmax;
+}

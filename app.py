@@ -62,6 +62,9 @@ class Decks(db.Model):
     name = db.Column(db.String(), nullable=False)
     user = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
 
+    def get_cards(self):
+        return DeckCard.query.filter_by(deck=self.id).all()
+
 
 class DeckCard(db.Model):
     __tablename__ = 'deckcard'

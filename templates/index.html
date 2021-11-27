@@ -52,12 +52,15 @@
         <div class="row">
           <ul class="list-group">
             {% for deck in decks %}
-            <li class="list-group-item"><a href="/deck/{{ deck.id }}">{{ deck.name }}</a></li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <a href="/deck/{{ deck.id }}">{{ deck.name }}</a>
+              <span class="badge badge-danger badge-pill bg-success">{{ deck.get_cards()|length }} cards</span>
+            </li>
             {% endfor %}
           </ul>
         </div>
       </div>
-      <div class="col">
+      <div class="col overflow-auto cardcol">
         <div class="row">
           <div class="col-sm-9"><h3>My Cards</h3><p class="text-muted">Double-click a card to flip it.</p></div>
           <div class="col-sm-3">
