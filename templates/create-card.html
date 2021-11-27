@@ -19,16 +19,20 @@
     <div class="row">
       <div class="col">
         <h2>Create a Card!</h2>
-        <form>
+        <form action='/card/' method="POST">
           <div class="form-group">
             <label for="cardfront">Front Text</label>
-            <input type="text" class="form-control" id="cardfront" placeholder="Text on the front of the card.">
+            <input type="text" class="form-control" name="cardfront" id="cardfront" placeholder="Text on the front of the card." required>
           </div>
           <div class="form-group pt-3 pb-3">
             <label for="cardback">Back Text</label>
-            <input type="text" class="form-control" id="cardback" placeholder="Text on the back of the card.">
+            <input type="text" class="form-control" id="cardback" name="cardback" placeholder="Text on the back of the card." required>
           </div>
-          <button type="submit" class="btn btn-primary">Submit</button>
+          <div class="form-group pb-3">
+            <div class="btn btn-light dropzone" id="image-dropzone"></div>
+          </div>
+          <input type="hidden" name="cardimg" id="cardimg">
+          <button type="submit" class="btn btn-primary">Save and Add Another</button>
         </form>
       </div>
       <div class="col">
@@ -69,6 +73,19 @@
       $(this).toggleClass("flip")
       $('.front').toggleClass('d-none')
       $('.back').toggleClass('d-none')
+    })
+
+    $('.dropzone').dropzone({ // camelized version of the `id`
+      url: '/upload/',
+      // previewTemplate: '<div></div>',
+      // createImageThumbnails: false,
+      dictDefaultMessage: "Upload an Image (optional)",
+      init: function() {
+        this.on('success', function(fileObj) {
+          $('.card-img-top').attr('src', '/upload/' + fileObj.name)
+          $('#cardimg').val(fileObj.name)
+        })
+      }
     })
   </script>
 

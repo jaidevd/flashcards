@@ -1,14 +1,32 @@
-from flask import Flask, render_template, request, abort, redirect, url_for
-from flask_login import LoginManager, login_user
+import os
+from flask import (
+    Flask,
+    render_template,
+    request,
+    abort,
+    redirect,
+    url_for,
+    send_from_directory,
+)
+from flask_login import LoginManager, login_user, current_user
 from flask_sqlalchemy import SQLAlchemy
+
+op = os.path
 
 
 app = Flask(__name__)
 app.secret_key = "8288975bbb4b17b4b02cbb573bc0a77be37e995440c10ad908bb43624d6d0e62"
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///data.sqlite3"
+ROOT = op.dirname(__file__)
+
 db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
+
+
+def _mkdir(path):
+    if not op.isdir(path):
+        os.makedirs(path)
 
 
 class User(db.Model):
@@ -63,13 +81,40 @@ def login():
         return redirect(url_for("index"))
 
 
-@app.route("/card/<string:card_id>", methods=["GET", "POST"])
+@app.route("/upload/", defaults={"filename": ""}, methods=["POST", "GET"])
+@app.route("/upload/<path:filename>")
+def upload(filename):
+    path = op.join(ROOT, "static", "uploads", current_user.user_id)
+    if request.method == "POST":
+        _mkdir(path)
+        _file = request.files["file"]
+        target = op.join(path, _file.filename)
+        _file.save(target)
+        return op.relpath(target, ROOT), 201
+    if request.method == "GET":
+        return send_from_directory(path, filename)
+
+
+@app.route("/card/", defaults={"card_id": ""}, methods=["GET", "POST"])
+@app.route("/card/<string:card_id>")
 def card(card_id):
     if request.method == "GET":
         if card_id == "create":
             return render_template("create-card.html")
         card_data = Cards.query.filter_by(card_id=int(card_id))
         return render_template("card.html", card_data)
+    if request.method == "POST":
+        if card_id:
+            abort(400, "card_id not allowed when POSTing a card.")
+        card = Cards(
+            user=current_user.id,
+            front=request.form["cardfront"],
+            back=request.form["cardback"],
+            image=request.form["cardimg"],
+        )
+        db.session.add(card)
+        db.session.commit()
+        return redirect("/card/create")
 
 
 if __name__ == "__main__":
