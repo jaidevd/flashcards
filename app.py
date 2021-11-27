@@ -62,7 +62,8 @@ def load_user(user_id):
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    cards = Cards.query.filter_by(user=current_user.id)
+    return render_template("index.html", cards=cards)
 
 
 @app.route("/login/", methods=["GET", "POST"])
