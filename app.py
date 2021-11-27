@@ -63,7 +63,10 @@ class Decks(db.Model):
     user = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
 
     def get_cards(self):
-        return DeckCard.query.filter_by(deck=self.id).all()
+        cards = []
+        for card in DeckCard.query.filter_by(deck=self.id).all():
+            cards.append(Cards.query.get(card.card))
+        return cards
 
 
 class DeckCard(db.Model):
@@ -140,6 +143,9 @@ def card(card_id):
 @app.route('/deck/', defaults={'deck_id': ''}, methods=['POST', 'GET'])
 @app.route('/deck/<int:deck_id>')
 def deck(deck_id):
+    if request.method == "GET":
+        deck = Decks.query.get(deck_id)
+        return render_template('deck.html', deck=deck)
     if request.method == 'POST':
         deck = Decks(name=request.form['deckname'], user=current_user.id)
         db.session.add(deck)
