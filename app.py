@@ -9,7 +9,13 @@ from flask import (
     url_for,
     send_from_directory,
 )
-from flask_login import LoginManager, login_user, current_user
+from flask_login import (
+    LoginManager,
+    login_user,
+    current_user,
+    login_required,
+    logout_user,
+)
 from flask_sqlalchemy import SQLAlchemy
 
 op = os.path
@@ -23,6 +29,7 @@ ROOT = op.dirname(__file__)
 db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
+login_manager.login_view = "/login/"
 
 
 def _mkdir(path):
@@ -57,7 +64,7 @@ class Cards(db.Model):
 
 
 class Decks(db.Model):
-    __tablename__ = 'decks'
+    __tablename__ = "decks"
     id = db.Column(db.Integer, primary_key=True, unique=True, nullable=False)
     name = db.Column(db.String(), nullable=False)
     user = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
@@ -70,10 +77,10 @@ class Decks(db.Model):
 
 
 class DeckCard(db.Model):
-    __tablename__ = 'deckcard'
+    __tablename__ = "deckcard"
     id = db.Column(db.Integer, primary_key=True, unique=True, nullable=False)
-    deck = db.Column(db.Integer, db.ForeignKey('decks.id'), nullable=False)
-    card = db.Column(db.Integer, db.ForeignKey('cards.id'), nullable=False)
+    deck = db.Column(db.Integer, db.ForeignKey("decks.id"), nullable=False)
+    card = db.Column(db.Integer, db.ForeignKey("cards.id"), nullable=False)
 
 
 @login_manager.user_loader
@@ -82,15 +89,19 @@ def load_user(user_id):
 
 
 @app.route("/")
+@login_required
 def index():
-    cards = Cards.query.filter_by(user=current_user.id)
-    decks = Decks.query.filter_by(user=current_user.id)
-    return render_template("index.html", cards=cards, decks=decks)
+    if current_user.is_authenticated():
+        cards = Cards.query.filter_by(user=current_user.id)
+        decks = Decks.query.filter_by(user=current_user.id)
+        return render_template("index.html", cards=cards, decks=decks)
+    return redirect(url_for("login"))
 
 
 @app.route("/login/", methods=["GET", "POST"])
 def login():
     if request.method == "GET":
+        logout_user()
         return render_template("login.html")
     if request.method == "POST":
         user = request.form["user_id"]
@@ -104,8 +115,30 @@ def login():
         return redirect(url_for("index"))
 
 
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    if request.method == "GET":
+        return render_template("signup.html", existing_user=False)
+    if request.method == "POST":
+        user_id = user_id = request.form["user_id"]
+        existing_user = User.query.filter_by(user_id=user_id).first()
+        if existing_user is not None:
+            return render_template("signup.html", existing_user=existing_user)
+        user = User(user_id=user_id, password=request.form["password-1"])
+        db.session.add(user)
+        db.session.commit()
+        return redirect("/login/")
+
+
+@app.route("/logout/", methods=["GET"])
+def logout():
+    logout_user()
+    return redirect("/login/")
+
+
 @app.route("/upload/", defaults={"filename": ""}, methods=["POST", "GET"])
 @app.route("/upload/<path:filename>")
+@login_required
 def upload(filename):
     path = op.join(ROOT, "static", "uploads", current_user.user_id)
     if request.method == "POST":
@@ -120,6 +153,7 @@ def upload(filename):
 
 @app.route("/card/", defaults={"card_id": ""}, methods=["GET", "POST"])
 @app.route("/card/<string:card_id>")
+@login_required
 def card(card_id):
     if request.method == "GET":
         if card_id == "create":
@@ -140,27 +174,28 @@ def card(card_id):
         return redirect("/card/create")
 
 
-@app.route('/deck/', defaults={'deck_id': ''}, methods=['POST', 'GET'])
-@app.route('/deck/<int:deck_id>')
+@app.route("/deck/", defaults={"deck_id": ""}, methods=["POST", "GET"])
+@app.route("/deck/<int:deck_id>")
+@login_required
 def deck(deck_id):
     if request.method == "GET":
         deck = Decks.query.get(deck_id)
-        return render_template('deck.html', deck=deck)
-    if request.method == 'POST':
-        deck = Decks(name=request.form['deckname'], user=current_user.id)
+        return render_template("deck.html", deck=deck)
+    if request.method == "POST":
+        deck = Decks(name=request.form["deckname"], user=current_user.id)
         db.session.add(deck)
         db.session.commit()
 
         # Add cards to deck
-        for card in json.loads(request.form['cards']):
-            card_id = int(card.split('-')[-1])
+        for card in json.loads(request.form["cards"]):
+            card_id = int(card.split("-")[-1])
             card = Cards.query.get(card_id)
             if card is None:
-                abort(404, f'Card with id {card_id} not found.')
+                abort(404, f"Card with id {card_id} not found.")
             deckcard = DeckCard(deck=deck.id, card=card.id)
             db.session.add(deckcard)
             db.session.commit()
-        return redirect('/')
+        return redirect("/")
 
 
 if __name__ == "__main__":
