@@ -14,10 +14,10 @@
   {% include 'template-navbar.html' %}
   <div class="container d-flex flex-column align-items-center">
     <div class="card shadow text-dark mx-auto my-4 px-5 py-3 col-md-6">
-      <form method="POST" action='/login/'>
+      <form>
         <div class="form-group pb-2">
-          <label for="user">Login</label>
-          <input type="text" class="form-control" name="user_id" id="user_id" placeholder="Login ID" autofocus required>
+          <label for="email">Email</label>
+          <input type="text" class="form-control" name="email" id="email" placeholder="Email" autofocus required>
         </div>
         <div class="form-group pb-2">
           <label for="password">Password</label>
@@ -31,5 +31,23 @@
   </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+  <script>
+    $('form').on('submit', function(e) {
+      console.log("HELLO!!!!")
+      e.preventDefault()
+      $.ajax({
+        type: "POST",
+        url: "/login?include_auth_token",
+        data: JSON.stringify({email: $('#email').val(), password: $('#password').val()}),
+        contentType: 'application/json',
+        processData: false,
+        success: function(resp) {
+          let token = resp.response.user.authentication_token
+          window.localStorage.setItem('flashcard-token', token)
+          window.location.href = "/?auth_token=" + token
+        }
+      })
+    })
+  </script>
 </body>
 </html>

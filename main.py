@@ -9,27 +9,32 @@ from flask import (
     url_for,
     send_from_directory,
 )
-from flask_login import (
-    LoginManager,
-    login_user,
+
+from flask_security import (
+    Security,
+    SQLAlchemyUserDatastore,
     current_user,
     login_required,
     logout_user,
 )
-from flask_sqlalchemy import SQLAlchemy
+
+
+from models import User, Cards, Decks, DeckCard, db, Role
 
 op = os.path
 
 
 app = Flask(__name__)
-app.secret_key = "8288975bbb4b17b4b02cbb573bc0a77be37e995440c10ad908bb43624d6d0e62"
+app.config["SECRET_KEY"] = "h3110w041d"
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///data.sqlite3"
-ROOT = op.dirname(__file__)
+app.config["SECURITY_PASSWORD_SALT"] = "bcrypt"
+app.config["SECURITY_TOKEN_AUTHENTICATION_HEADER"] = "Authentication-Token"
+# app.config['SECURITY_LOGIN_URL'] = '/login'
+app.config["SECURITY_LOGIN_USER_TEMPLATE"] = "login.html"
+app.config["WTF_CSRF_ENABLED"] = False
 
-db = SQLAlchemy(app)
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = "/login/"
+db.init_app(app)
+ROOT = op.dirname(__file__)
 
 
 def _mkdir(path):
@@ -37,110 +42,31 @@ def _mkdir(path):
         os.makedirs(path)
 
 
-class User(db.Model):
-    __tablename__ = "users"
-    id = db.Column(db.Integer, primary_key=True, unique=True, nullable=False)
-    user_id = db.Column(db.String(), unique=True, nullable=False)
-    password = db.Column(db.String(), nullable=False)
-
-    def is_active(self):
-        return True
-
-    def get_id(self):
-        return self.user_id
-
-    def is_authenticated(self):
-        return True
-
-
-class Cards(db.Model):
-    __tablename__ = "cards"
-    id = db.Column(db.Integer, primary_key=True, unique=True, nullable=False)
-    user = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    front = db.Column(db.String(), nullable=False)
-    back = db.Column(db.String(), nullable=False)
-    image = db.Column(db.String())
-    tags = db.Column(db.String())
-
-
-class Decks(db.Model):
-    __tablename__ = "decks"
-    id = db.Column(db.Integer, primary_key=True, unique=True, nullable=False)
-    name = db.Column(db.String(), nullable=False)
-    user = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-
-    def get_cards(self):
-        cards = []
-        for card in DeckCard.query.filter_by(deck=self.id).all():
-            cards.append(Cards.query.get(card.card))
-        return cards
-
-
-class DeckCard(db.Model):
-    __tablename__ = "deckcard"
-    id = db.Column(db.Integer, primary_key=True, unique=True, nullable=False)
-    deck = db.Column(db.Integer, db.ForeignKey("decks.id"), nullable=False)
-    card = db.Column(db.Integer, db.ForeignKey("cards.id"), nullable=False)
-
-
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.filter_by(user_id=user_id).first()
+user_datastore = SQLAlchemyUserDatastore(db, User, Role)
+security = Security(app, user_datastore)
 
 
 @app.route("/")
 @login_required
 def index():
-    if current_user.is_authenticated():
+    if current_user.is_authenticated:
         cards = Cards.query.filter_by(user=current_user.id)
         decks = Decks.query.filter_by(user=current_user.id)
         return render_template("index.html", cards=cards, decks=decks)
     return redirect(url_for("login"))
 
 
-@app.route("/login/", methods=["GET", "POST"])
-def login():
-    if request.method == "GET":
-        logout_user()
-        return render_template("login.html")
-    if request.method == "POST":
-        user = request.form["user_id"]
-        password = request.form["password"]
-        user = User.query.filter_by(user_id=user).first()
-        if not user:
-            abort(404, f"User {user} not found.")
-        if password != user.password:
-            abort(403, "Incorrect password.")
-        login_user(user)
-        return redirect(url_for("index"))
-
-
-@app.route("/signup", methods=["GET", "POST"])
-def signup():
-    if request.method == "GET":
-        return render_template("signup.html", existing_user=False)
-    if request.method == "POST":
-        user_id = user_id = request.form["user_id"]
-        existing_user = User.query.filter_by(user_id=user_id).first()
-        if existing_user is not None:
-            return render_template("signup.html", existing_user=existing_user)
-        user = User(user_id=user_id, password=request.form["password-1"])
-        db.session.add(user)
-        db.session.commit()
-        return redirect("/login/")
-
-
 @app.route("/logout/", methods=["GET"])
 def logout():
     logout_user()
-    return redirect("/login/")
+    return redirect("/login")
 
 
 @app.route("/upload/", defaults={"filename": ""}, methods=["POST", "GET"])
 @app.route("/upload/<path:filename>")
 @login_required
 def upload(filename):
-    path = op.join(ROOT, "static", "uploads", current_user.user_id)
+    path = op.join(ROOT, "static", "uploads", current_user.email)
     if request.method == "POST":
         _mkdir(path)
         _file = request.files["file"]
@@ -199,4 +125,4 @@ def deck(deck_id):
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host="0.0.0.0", debug=True)
