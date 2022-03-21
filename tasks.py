@@ -59,7 +59,7 @@ def anki_import(name, buff, user):
         backs = [f[-1] for f in noteFields]
         frontImages = [BeautifulSoup(f[0]).find("img").attrs["src"] for f in noteFields]
         media = {v: k for k, v in media.items()}
-        uploads_dir = op.join("static/uploads", email)
+        uploads_dir = op.join(op.dirname(__file__), "static/uploads", email)
         _mkdir(uploads_dir)
         for frontImage in frontImages:
             img = z.read(media[frontImage])
