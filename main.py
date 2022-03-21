@@ -1,7 +1,7 @@
+from tempfile import NamedTemporaryFile
 import os
 import json
 from flask import (
-    Flask,
     render_template,
     request,
     abort,
@@ -20,26 +20,13 @@ from flask_security import (
 
 
 from models import User, Cards, Decks, DeckCard, db, Role
+from tasks import anki_import, notify_import, _mkdir, create_app
+
 
 op = os.path
-
-
-app = Flask(__name__)
-app.config["SECRET_KEY"] = "h3110w041d"
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///data.sqlite3"
-app.config["SECURITY_PASSWORD_SALT"] = "bcrypt"
-app.config["SECURITY_TOKEN_AUTHENTICATION_HEADER"] = "Authentication-Token"
-# app.config['SECURITY_LOGIN_URL'] = '/login'
-app.config["SECURITY_LOGIN_USER_TEMPLATE"] = "login.html"
-app.config["WTF_CSRF_ENABLED"] = False
-
+app = create_app()
 db.init_app(app)
 ROOT = op.dirname(__file__)
-
-
-def _mkdir(path):
-    if not op.isdir(path):
-        os.makedirs(path)
 
 
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
@@ -122,6 +109,19 @@ def deck(deck_id):
             db.session.add(deckcard)
             db.session.commit()
         return redirect("/")
+
+
+@app.route("/import", methods=["POST"])
+@login_required
+def deck_import():
+    _file = request.files["file"]
+    with NamedTemporaryFile(mode="wb", delete=False) as buff:
+        _file.save(buff)
+    anki_import.apply_async(
+        (_file.filename, buff.name, current_user.id),
+        link=notify_import.s(current_user.email),
+    )
+    return buff.name, 200
 
 
 if __name__ == "__main__":
