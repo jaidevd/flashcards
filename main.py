@@ -118,7 +118,8 @@ def deck_import():
     with NamedTemporaryFile(mode="wb", delete=False) as buff:
         _file.save(buff)
     anki_import.apply_async(
-        (_file.filename, buff.name, current_user.id), link=notify_import.s(current_user.email)
+        (_file.filename, buff.name, current_user.id),
+        link=notify_import.s(current_user.email),
     )
     return buff.name, 200
 

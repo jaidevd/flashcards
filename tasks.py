@@ -9,13 +9,13 @@ from models import User, Cards, Decks, DeckCard, db
 from gramex.services import SMTPMailer
 from flask import Flask
 
-with open('.secrets.json', 'r') as fin:
+with open(".secrets.json", "r") as fin:
     secrets = json.load(fin)
 
 mailer = SMTPMailer(
     "gmail",
     email="deshpande.jaidev@gmail.com",
-    password=secrets['gmail-password'],
+    password=secrets["gmail-password"],
 )
 
 op = os.path
