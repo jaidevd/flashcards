@@ -88,12 +88,20 @@ def card(card_id):
 
 
 @app.route("/deck/", defaults={"deck_id": ""}, methods=["POST", "GET"])
-@app.route("/deck/<int:deck_id>")
+@app.route("/deck/<int:deck_id>", methods=["GET", "POST", "DELETE"])
 @login_required
 def deck(deck_id):
     if request.method == "GET":
         deck = Decks.query.get(deck_id)
         return render_template("deck.html", deck=deck)
+    if request.method == 'DELETE':
+        deck = Decks.query.get(deck_id)
+        db.session.delete(deck)
+        deckcards = DeckCard.query.filter_by(deck=deck.id)
+        for card in deckcards:
+            db.session.delete(card)
+        db.session.commit()
+        return "", 200
     if request.method == "POST":
         deck = Decks(name=request.form["deckname"], user=current_user.id)
         db.session.add(deck)
