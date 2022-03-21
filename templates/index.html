@@ -56,6 +56,7 @@
             <li class="list-group-item d-flex justify-content-between align-items-center">
               <a href="/deck/{{ deck.id }}">{{ deck.name }}</a>
               <span class="badge badge-danger badge-pill bg-success">{{ deck.get_cards()|length }} cards</span>
+              <button class="btn btn-danger deldeck" id="deldeck-{{ deck.id }}"><i class="fas fa-trash"></i></button>
             </li>
             {% endfor %}
           </ul>
@@ -142,7 +143,16 @@
       })
     }
   })
-  </script>
+  $('.deldeck').on('click', function() {
+    let deck = $(this).attr('id').replace('deldeck-', '')
+    $.ajax({
+      url: `/deck/${deck}`,
+      method: 'DELETE',
+      success: function() {
+        window.location.reload()
+      }
+    })
+  })
   </script>
 </body>
 
