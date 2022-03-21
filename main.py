@@ -20,7 +20,7 @@ from flask_security import (
 
 
 from models import User, Cards, Decks, DeckCard, db, Role
-from tasks import anki_import, notify_import, _mkdir, create_app
+from tasks import anki_import, notify_import, _mkdir, create_app, notify_webhook
 
 
 op = os.path
@@ -94,7 +94,7 @@ def deck(deck_id):
     if request.method == "GET":
         deck = Decks.query.get(deck_id)
         return render_template("deck.html", deck=deck)
-    if request.method == 'DELETE':
+    if request.method == "DELETE":
         deck = Decks.query.get(deck_id)
         db.session.delete(deck)
         deckcards = DeckCard.query.filter_by(deck=deck.id)
@@ -116,12 +116,32 @@ def deck(deck_id):
             deckcard = DeckCard(deck=deck.id, card=card.id)
             db.session.add(deckcard)
             db.session.commit()
-        return redirect("/")
+        return "", 201
+
+
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    if request.method == "GET":
+        return render_template("signup.html", existing_user=False)
+    if request.method == "POST":
+        email = request.form["email"]
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user is not None:
+            return render_template("signup.html", existing_user=existing_user)
+        user = User(
+            email=email,
+            password=request.form["password-1"],
+            roles=[Role.query.get(1)],
+        )
+        db.session.add(user)
+        db.session.commit()
+        return redirect("/login")
 
 
 @app.route("/import", methods=["POST"])
 @login_required
 def deck_import():
+    app.logger.debug(current_user.email)
     _file = request.files["file"]
     with NamedTemporaryFile(mode="wb", delete=False) as buff:
         _file.save(buff)
@@ -129,7 +149,17 @@ def deck_import():
         (_file.filename, buff.name, current_user.id),
         link=notify_import.s(current_user.email),
     )
-    return buff.name, 200
+    return redirect("/")
+
+
+@app.route("/chat", methods=["POST"])
+@login_required
+def post_chat():
+    data = json.loads(request.data)
+    score = data['score']
+    deck = data.get('deck', "Deck")
+    notify_webhook.apply_async((current_user.email, deck, score))
+    return "", 200
 
 
 if __name__ == "__main__":

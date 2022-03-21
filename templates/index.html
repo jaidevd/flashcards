@@ -54,7 +54,7 @@
           <ul class="list-group">
             {% for deck in decks %}
             <li class="list-group-item d-flex justify-content-between align-items-center">
-              <a href="/deck/{{ deck.id }}">{{ deck.name }}</a>
+              <a href="/deck/{{ deck.id }}" class="tokenlink">{{ deck.name }}</a>
               <span class="badge badge-danger badge-pill bg-success">{{ deck.get_cards()|length }} cards</span>
               <button class="btn btn-danger deldeck" id="deldeck-{{ deck.id }}"><i class="fas fa-trash"></i></button>
             </li>
@@ -83,7 +83,7 @@
             {% for card in cards %}
               <div class="card usercard" id="usercard-{{ card.id }}">
                 <div class="front">
-                  <img src="/upload/{{ card.image }}" class="card-img-top">
+                  <img id="card-{{ card.id }}" src="/upload/{{ card.image }}" class="card-img-top">
                   <div class="card-body">
                     <p class="card-text text-center">{{ card.front }}</p>
                   </div>
@@ -134,8 +134,28 @@
       }
     }
   })
+  var token = localStorage.getItem('flashcard-token')
+  $('.card-img-top').each(function(ix, card) {
+      let iden = $(card).attr('id')
+      let src = $(card).attr('src')
+      $(card).attr('src', src + '?auth_token=' + token)
+    }
+  )
+  $('.tokenlink').each(function(ix, elem) {
+    $(elem).attr('href', $(elem).attr('href') + '?auth_token=' + token)
+  })
+  $('form').each(function(ix, elem) {
+      $(elem).attr('action', $(elem).attr('action') + '?auth_token=' + token)
+  })
+  $('form').on('submit', function(e) {
+
+    e.preventDefault()
+    console.log('before')
+    console.log($(this).serializeArray())
+    console.log('after')
+  })
   $('.dropzone').dropzone({ // camelized version of the `id`
-    url: '/import',
+    url: '/import?auth_token=' + localStorage.getItem('flashcard-token'),
     dictDefaultMessage: "Upload an Anki deck",
     init: function() {
       this.on('success', function(fileObj) {
@@ -146,7 +166,7 @@
   $('.deldeck').on('click', function() {
     let deck = $(this).attr('id').replace('deldeck-', '')
     $.ajax({
-      url: `/deck/${deck}`,
+      url: `/deck/${deck}?auth_token=` + token,
       method: 'DELETE',
       success: function() {
         window.location.reload()

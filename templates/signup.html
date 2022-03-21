@@ -21,13 +21,13 @@
       </div>
       {% if existing_user %}
       <div class="alert alter-danger">
-        Sorry, user ID <span class="text-monospace">{{ existing_user.user_id }}</span> is already taken. Please pick a different user ID.
+        Sorry, user ID <span class="text-monospace">{{ existing_user.email }}</span> is already taken. Please pick a different email address.
       </div>
       {% endif %}
       <form method="POST" action='/signup'>
         <div class="form-group pb-2">
-          <label for="user">Username</label>
-          <input type="text" class="form-control" name="user_id" id="user_id" placeholder="Login ID" autofocus required>
+          <label for="user">Email</label>
+          <input type="text" class="form-control" name="email" id="email" placeholder="Login ID" autofocus required>
         </div>
         <div class="form-group pb-2">
           <label for="password">Password</label>

@@ -18,9 +18,9 @@ class User(db.Model, FsUserMixin):
     email = db.Column(db.String(), unique=True, nullable=False)
     password = db.Column(db.String(), nullable=False)
     fs_uniquifier = db.Column(db.String(255), unique=True, nullable=True)
-    active = db.Column(db.Boolean())
+    active = db.Column(db.Boolean(), default=True)
     roles = db.relationship(
-        "Role", secondary=roles_users, backref=db.backref("users", lazy="dynamic")
+        "Role", secondary=roles_users, backref=db.backref("users", lazy="dynamic"),
     )
 
     confirmed_at = property(lambda x: '')

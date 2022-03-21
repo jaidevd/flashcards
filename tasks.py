@@ -1,4 +1,6 @@
 import os
+import logging
+import requests
 from anki.storage import Collection
 import json
 from tempfile import gettempdir
@@ -24,7 +26,9 @@ app = Celery("tasks", broker="redis://localhost:6379/0", backend="redis://localh
 
 def create_app():
     flask_app = Flask(__name__)
+    flask_app.logger.setLevel(logging.DEBUG)
     flask_app.config["SECRET_KEY"] = "h3110w041d"
+    flask_app.config['MAX_CONTENT_LENGTH'] = 128 * 1_000_000
     flask_app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///data.sqlite3"
     flask_app.config["SECURITY_PASSWORD_SALT"] = "bcrypt"
     flask_app.config["SECURITY_TOKEN_AUTHENTICATION_HEADER"] = "Authentication-Token"
@@ -93,3 +97,15 @@ def anki_import(name, buff, user):
 @app.task
 def notify_import(deck_name, email):
     mailer.mail(to=email, subject="Your deck is ready!", body="Your deck is ready.")
+
+
+@app.task
+def notify_webhook(email, deck, score):
+    text = f"Hello! You just scored {round(score, 2)}% on the {deck} deck!"
+    url = secrets["webhooks"][email]
+    resp = requests.post(
+        url,
+        headers={"Content-Type": "application/json"},
+        data=json.dumps({"text": text}),
+    )
+    return resp.json(), resp.status_code
