@@ -116,3 +116,23 @@ def notify_webhook(email, deck, score):
         )
         return resp.json(), resp.status_code
     return "No webhook for email {email}", 404
+
+
+# Scheduled tasks
+@app.on_after_configure.connect
+def setup_email_reminders(sender, **kwargs):
+    flask_app = create_app()
+    db.init_app(flask_app)
+    with flask_app.app_context():
+        for user in User.query.all():
+            sender.add_periodic_task(3600, email_reminder.s(user.email))
+
+
+@app.task
+def email_reminder(email):
+    body = """Dear user,
+
+    This is your periodic reminder for revising your flashcard decks.
+
+    Login now and start learning!"""
+    mailer.mail(to=email, subject="[Flashcards] Don't forget to practice!", body=body)
