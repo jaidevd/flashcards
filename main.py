@@ -1,14 +1,8 @@
 from tempfile import NamedTemporaryFile
 import os
 import json
-from flask import (
-    render_template,
-    request,
-    abort,
-    redirect,
-    url_for,
-    send_from_directory,
-)
+from mimetypes import guess_type
+from flask import render_template, request, abort, redirect, url_for, make_response
 
 from flask_security import (
     Security,
@@ -17,6 +11,7 @@ from flask_security import (
     login_required,
     logout_user,
 )
+from flask_caching import Cache
 
 
 from models import User, Cards, Decks, DeckCard, db, Role
@@ -26,6 +21,7 @@ from tasks import anki_import, notify_import, _mkdir, create_app, notify_webhook
 op = os.path
 app = create_app()
 db.init_app(app)
+cache = Cache(app)
 ROOT = op.dirname(__file__)
 
 
@@ -35,11 +31,14 @@ security = Security(app, user_datastore)
 
 @app.route("/")
 @login_required
+@cache.cached(timeout=1)
 def index():
     if current_user.is_authenticated:
         cards = Cards.query.filter_by(user=current_user.id)
         decks = Decks.query.filter_by(user=current_user.id)
-        return render_template("index.html", cards=cards, decks=decks)
+        return render_template(
+            "index.html", cards=cards, decks=decks, token=request.args["auth_token"]
+        )
     return redirect(url_for("login"))
 
 
@@ -51,6 +50,7 @@ def logout():
 
 @app.route("/upload/", defaults={"filename": ""}, methods=["POST", "GET"])
 @app.route("/upload/<path:filename>")
+@cache.cached(timeout=5)
 @login_required
 def upload(filename):
     path = op.join(ROOT, "static", "uploads", current_user.email)
@@ -61,11 +61,18 @@ def upload(filename):
         _file.save(target)
         return op.relpath(target, ROOT), 201
     if request.method == "GET":
-        return send_from_directory(path, filename)
+        fpath = op.join(path, filename)
+        with open(fpath, "rb") as fin:
+            data = fin.read()
+        mtype = guess_type(fpath)
+        resp = make_response(data)
+        resp.headers["Content-Type"] = mtype
+        return resp
 
 
 @app.route("/card/", defaults={"card_id": ""}, methods=["GET", "POST"])
 @app.route("/card/<string:card_id>")
+@cache.cached(timeout=5)
 @login_required
 def card(card_id):
     if request.method == "GET":
@@ -90,6 +97,7 @@ def card(card_id):
 @app.route("/deck/", defaults={"deck_id": ""}, methods=["POST", "GET"])
 @app.route("/deck/<int:deck_id>", methods=["GET", "POST", "DELETE"])
 @login_required
+@cache.cached(timeout=5)
 def deck(deck_id):
     if request.method == "GET":
         deck = Decks.query.get(deck_id)
@@ -156,8 +164,8 @@ def deck_import():
 @login_required
 def post_chat():
     data = json.loads(request.data)
-    score = data['score']
-    deck = data.get('deck', "Deck")
+    score = data["score"]
+    deck = data.get("deck", "Deck")
     notify_webhook.apply_async((current_user.email, deck, score))
     return "", 200
 

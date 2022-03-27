@@ -28,13 +28,18 @@ def create_app():
     flask_app = Flask(__name__)
     flask_app.logger.setLevel(logging.DEBUG)
     flask_app.config["SECRET_KEY"] = "h3110w041d"
-    flask_app.config['MAX_CONTENT_LENGTH'] = 128 * 1_000_000
+    flask_app.config["MAX_CONTENT_LENGTH"] = 128 * 1_000_000
     flask_app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///data.sqlite3"
     flask_app.config["SECURITY_PASSWORD_SALT"] = "bcrypt"
     flask_app.config["SECURITY_TOKEN_AUTHENTICATION_HEADER"] = "Authentication-Token"
     # app.config['SECURITY_LOGIN_URL'] = '/login'
     flask_app.config["SECURITY_LOGIN_USER_TEMPLATE"] = "login.html"
     flask_app.config["WTF_CSRF_ENABLED"] = False
+
+    # Caching configuration
+    flask_app.config["CACHE_TYPE"] = "RedisCache"
+    flask_app.config["CACHE_KEY_PREFIX"] = "fc_"
+    flask_app.config["CACHE_REDIS_HOST"] = "127.0.0.1"
     return flask_app
 
 

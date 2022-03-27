@@ -83,13 +83,13 @@
             {% for card in cards %}
               <div class="card usercard" id="usercard-{{ card.id }}">
                 <div class="front">
-                  <img id="card-{{ card.id }}" src="/upload/{{ card.image }}" class="card-img-top">
+                  <img id="card-{{ card.id }}" src="/upload/{{ card.image }}?auth_token={{ token }}" class="card-img-top">
                   <div class="card-body">
                     <p class="card-text text-center">{{ card.front }}</p>
                   </div>
                 </div>
                 <div class="back d-none">
-                  <img class="card-img-top" src="/upload/{{ card.image }}" alt="An Image Goes Here">
+                  <img class="card-img-top" src="/upload/{{ card.image }}?auth_token={{ token }}" alt="An Image Goes Here">
                   <div class="card-body">
                     <p class="card-text card-text-back text-center">{{ card.back }}</p>
                   </div>
@@ -135,12 +135,6 @@
     }
   })
   var token = localStorage.getItem('flashcard-token')
-  $('.card-img-top').each(function(ix, card) {
-      let iden = $(card).attr('id')
-      let src = $(card).attr('src')
-      $(card).attr('src', src + '?auth_token=' + token)
-    }
-  )
   $('.tokenlink').each(function(ix, elem) {
     $(elem).attr('href', $(elem).attr('href') + '?auth_token=' + token)
   })
