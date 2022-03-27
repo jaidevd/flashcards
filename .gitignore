@@ -133,3 +133,5 @@ node_modules/*
 .secrets.json
 dump.rdb
 exports/*.zip
+celerybeat-schedule*
+reports/*.pdf

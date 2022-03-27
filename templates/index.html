@@ -48,6 +48,9 @@
           </form>
         </div>
         <div class="row pt-3">
+          <div class="btn btn-primary" id="report">Send Progress Report</div>
+        </div>
+        <div class="row pt-3">
           <h3>My Decks</h3>
         </div>
         <div class="row">
@@ -166,6 +169,14 @@
         window.location.reload()
       }
     })
+  })
+  $('#report').on('click', function() {
+    fetch('/report?auth_token=' + token)
+      .then((r) => {
+        if (r.ok) {
+          alert('Your report is being generated. Please check your inbox.')
+        }
+      })
   })
   </script>
 </body>

@@ -24,7 +24,7 @@ from flask_caching import Cache
 
 
 from models import User, Cards, Decks, DeckCard, db, Role, History
-from tasks import anki_import, notify_import, _mkdir, create_app, notify_webhook
+from tasks import anki_import, notify_import, _mkdir, create_app, notify_webhook, progress_report
 
 
 op = os.path
@@ -40,7 +40,7 @@ security = Security(app, user_datastore)
 
 @app.route("/")
 @login_required
-@cache.cached(timeout=60)
+# @cache.cached(timeout=60)
 def index():
     if current_user.is_authenticated:
         cards = Cards.query.filter_by(user=current_user.id)
@@ -210,6 +210,13 @@ def export(deck_id):
     resp.headers["Content-Type"] = "application/zip"
     resp.headers["Content-Disposition"] = f'attachment; filename="{deck.name}.zip"'
     return resp
+
+
+@app.route("/report", methods=['GET'])
+@login_required
+def send_report():
+    progress_report.apply_async((current_user.id, ))
+    return "", 200
 
 
 if __name__ == "__main__":

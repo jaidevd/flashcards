@@ -9,7 +9,9 @@ from celery import Celery
 from zipfile import ZipFile
 from models import User, Cards, Decks, DeckCard, db
 from gramex.services import SMTPMailer
-from flask import Flask
+from flask import Flask, render_template
+from weasyprint import HTML
+from datetime import datetime
 
 with open(".secrets.json", "r") as fin:
     secrets = json.load(fin)
@@ -136,3 +138,27 @@ def email_reminder(email):
 
     Login now and start learning!"""
     mailer.mail(to=email, subject="[Flashcards] Don't forget to practice!", body=body)
+
+
+@app.task
+def progress_report(user_id):
+    flask_app = create_app()
+    db.init_app(flask_app)
+    with flask_app.app_context():
+        user = User.query.get(user_id)
+        decks = Decks.query.filter_by(user=user_id)
+        html = render_template("progress-report.html", user=user, decks=decks)
+        _mkdir("reports")
+        reports_dir = op.join("reports", user.email)
+        _mkdir(reports_dir)
+        now = datetime.now().strftime("%Y-%m-%d:%H-%M%S")
+        attachment = op.join(
+            reports_dir, f"[FlashCards] - Progress Report - [{user.email}] - {now}.pdf"
+        )
+        HTML(string=html).write_pdf(attachment)
+        mailer.mail(
+            to=user.email,
+            subject="[Flashcards] Your Progress Report",
+            html=html,
+            attachments=[attachment],
+        )

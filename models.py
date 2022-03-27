@@ -3,6 +3,8 @@ from flask_security.models.fsqla_v2 import FsUserMixin, FsModels, FsRoleMixin
 import json
 from zipfile import ZipFile
 import os
+from datetime import datetime
+from humanize import naturaldelta
 
 
 op = os.path
@@ -93,6 +95,36 @@ class Decks(db.Model):
         for card in DeckCard.query.filter_by(deck=self.id).all():
             cards.append(Cards.query.get(card.card))
         return cards
+
+    def last_reviewed(self):
+        history = (
+            History.query.filter_by(deck=self.id)
+            .order_by(History.timestamp.desc())
+            .first()
+        )
+        if history is None:
+            return None, None
+        t = history.timestamp
+        ago = naturaldelta(datetime.now() - t)
+        return t, ago
+
+    def latest_score(self):
+        history = (
+            History.query.filter_by(deck=self.id)
+            .order_by(History.timestamp.desc())
+            .first()
+        )
+        if history:
+            return history.score
+        return 0
+
+    def avg_score(self):
+        history = History.query.filter_by(deck=self.id).order_by(
+            History.timestamp.desc()
+        )
+        if history.count():
+            return round(sum([k.score for k in history]) / history.count(), 2)
+        return 0
 
 
 class History(db.Model):
