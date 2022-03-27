@@ -40,7 +40,7 @@ security = Security(app, user_datastore)
 
 @app.route("/")
 @login_required
-@cache.cached(timeout=1)
+@cache.cached(timeout=60)
 def index():
     if current_user.is_authenticated:
         cards = Cards.query.filter_by(user=current_user.id)
@@ -59,7 +59,7 @@ def logout():
 
 @app.route("/upload/", defaults={"filename": ""}, methods=["POST", "GET"])
 @app.route("/upload/<path:filename>")
-@cache.cached(timeout=5)
+@cache.cached(timeout=3600)
 @login_required
 def upload(filename):
     path = op.join(ROOT, "static", "uploads", current_user.email)
@@ -81,7 +81,7 @@ def upload(filename):
 
 @app.route("/card/", defaults={"card_id": ""}, methods=["GET", "POST"])
 @app.route("/card/<string:card_id>")
-@cache.cached(timeout=5)
+@cache.cached(timeout=3600)
 @login_required
 def card(card_id):
     if request.method == "GET":
@@ -106,11 +106,13 @@ def card(card_id):
 @app.route("/deck/", defaults={"deck_id": ""}, methods=["POST", "GET"])
 @app.route("/deck/<int:deck_id>", methods=["GET", "POST", "DELETE"])
 @login_required
-@cache.cached(timeout=5)
+@cache.cached(timeout=300)
 def deck(deck_id):
     if request.method == "GET":
         deck = Decks.query.get(deck_id)
-        return render_template("deck.html", deck=deck)
+        return render_template(
+            "deck.html", deck=deck, token=request.args.get("auth_token", "")
+        )
     if request.method == "DELETE":
         deck = Decks.query.get(deck_id)
         db.session.delete(deck)
@@ -172,7 +174,7 @@ def deck_import():
 @app.route("/scores/<int:deck_id>", methods=["GET", "POST"])
 @app.route("/scores/", defaults={"deck_id": ""}, methods=["POST", "GET"])
 @login_required
-@cache.cached(timeout=5)
+@cache.cached(timeout=60)
 def scores(deck_id):
     if request.method == "GET":
         if deck_id:
@@ -190,6 +192,24 @@ def scores(deck_id):
         db.session.commit()
         notify_webhook.apply_async((current_user.email, deck.name, score))
         return "", 201
+
+
+@app.route("/export/<int:deck_id>", methods=["GET"])
+@login_required
+@cache.cached(timeout=3600)
+def export(deck_id):
+    exportpath = op.join(op.dirname(__file__), "exports")
+    _mkdir(exportpath)
+    filepath = op.join(exportpath, f"{deck_id}.zip")
+    deck = Decks.query.get(deck_id)
+    if not op.isfile(filepath):
+        deck.export(filepath)
+    with open(filepath, "rb") as fout:
+        data = fout.read()
+    resp = make_response(data)
+    resp.headers["Content-Type"] = "application/zip"
+    resp.headers["Content-Disposition"] = f'attachment; filename="{deck.name}.zip"'
+    return resp
 
 
 if __name__ == "__main__":

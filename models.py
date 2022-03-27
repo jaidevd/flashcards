@@ -1,6 +1,11 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_security.models.fsqla_v2 import FsUserMixin, FsModels, FsRoleMixin
+import json
+from zipfile import ZipFile
+import os
 
+
+op = os.path
 db = SQLAlchemy()
 FsModels.set_db_info(db)
 db.metadata.clear()
@@ -66,6 +71,22 @@ class Decks(db.Model):
     id = db.Column(db.Integer, primary_key=True, unique=True, nullable=False)
     name = db.Column(db.String(), nullable=False)
     user = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+
+    def export(self, path):
+        cards = self.get_cards()
+        imagepath = op.join(
+            op.dirname(__file__), "static", "uploads", User.query.get(self.user).email
+        )
+        with ZipFile(path, "w") as fout:
+            cardsdata = json.dumps(
+                [
+                    {"id": c.id, "front": c.front, "back": c.back, "image": c.image}
+                    for c in cards
+                ]
+            )
+            fout.writestr("cards.json", cardsdata)
+            for card in cards:
+                fout.write(op.join(imagepath, card.image), f"images/{card.image}")
 
     def get_cards(self):
         cards = []

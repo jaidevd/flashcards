@@ -132,3 +132,4 @@ node_modules/*
 
 .secrets.json
 dump.rdb
+exports/*.zip
