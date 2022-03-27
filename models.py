@@ -20,23 +20,25 @@ class User(db.Model, FsUserMixin):
     fs_uniquifier = db.Column(db.String(255), unique=True, nullable=True)
     active = db.Column(db.Boolean(), default=True)
     roles = db.relationship(
-        "Role", secondary=roles_users, backref=db.backref("users", lazy="dynamic"),
+        "Role",
+        secondary=roles_users,
+        backref=db.backref("users", lazy="dynamic"),
     )
 
-    confirmed_at = property(lambda x: '')
-    last_login_at = property(lambda x: '')
-    current_login_at = property(lambda x: '')
-    last_login_ip = property(lambda x: '')
-    current_login_ip = property(lambda x: '')
-    login_count = property(lambda x: '')
-    tf_primary_method = property(lambda x: '')
-    tf_totp_secret = property(lambda x: '')
-    tf_phone_number = property(lambda x: '')
-    create_datetime = property(lambda x: '')
-    update_datetime = property(lambda x: '')
-    username = property(lambda x: '')
-    us_totp_secrets = property(lambda x: '')
-    us_phone_number = property(lambda x: '')
+    confirmed_at = property(lambda x: "")
+    last_login_at = property(lambda x: "")
+    current_login_at = property(lambda x: "")
+    last_login_ip = property(lambda x: "")
+    current_login_ip = property(lambda x: "")
+    login_count = property(lambda x: "")
+    tf_primary_method = property(lambda x: "")
+    tf_totp_secret = property(lambda x: "")
+    tf_phone_number = property(lambda x: "")
+    create_datetime = property(lambda x: "")
+    update_datetime = property(lambda x: "")
+    username = property(lambda x: "")
+    us_totp_secrets = property(lambda x: "")
+    us_phone_number = property(lambda x: "")
 
 
 class Role(db.Model, FsRoleMixin):
@@ -45,8 +47,8 @@ class Role(db.Model, FsRoleMixin):
     name = db.Column(db.String(80), unique=True)
     description = db.Column(db.String(255))
 
-    permissions = property(lambda x: '')
-    update_datetime = property(lambda x: '')
+    permissions = property(lambda x: "")
+    update_datetime = property(lambda x: "")
 
 
 class Cards(db.Model):
@@ -70,6 +72,17 @@ class Decks(db.Model):
         for card in DeckCard.query.filter_by(deck=self.id).all():
             cards.append(Cards.query.get(card.card))
         return cards
+
+
+class History(db.Model):
+    __tablename__ = "history"
+    id = db.Column(db.Integer, primary_key=True, unique=True, nullable=False)
+    deck = db.Column(db.Integer, db.ForeignKey("decks.id"), nullable=False)
+    score = db.Column(db.Float, nullable=False)
+    timestamp = db.Column(db.DateTime(), nullable=False)
+
+    def serialize(self):
+        return {k.name: self.__dict__[k.name] for k in self.__table__.columns}
 
 
 class DeckCard(db.Model):

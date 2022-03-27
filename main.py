@@ -1,8 +1,17 @@
 from tempfile import NamedTemporaryFile
+from datetime import datetime
 import os
 import json
 from mimetypes import guess_type
-from flask import render_template, request, abort, redirect, url_for, make_response
+from flask import (
+    render_template,
+    request,
+    abort,
+    redirect,
+    url_for,
+    make_response,
+    jsonify,
+)
 
 from flask_security import (
     Security,
@@ -14,7 +23,7 @@ from flask_security import (
 from flask_caching import Cache
 
 
-from models import User, Cards, Decks, DeckCard, db, Role
+from models import User, Cards, Decks, DeckCard, db, Role, History
 from tasks import anki_import, notify_import, _mkdir, create_app, notify_webhook
 
 
@@ -160,14 +169,27 @@ def deck_import():
     return redirect("/")
 
 
-@app.route("/chat", methods=["POST"])
+@app.route("/scores/<int:deck_id>", methods=["GET", "POST"])
+@app.route("/scores/", defaults={"deck_id": ""}, methods=["POST", "GET"])
 @login_required
-def post_chat():
-    data = json.loads(request.data)
-    score = data["score"]
-    deck = data.get("deck", "Deck")
-    notify_webhook.apply_async((current_user.email, deck, score))
-    return "", 200
+@cache.cached(timeout=5)
+def scores(deck_id):
+    if request.method == "GET":
+        if deck_id:
+            deck_scores = History.query.filter_by(deck=deck_id)
+            return jsonify(deck_scores.all())
+        else:
+            return jsonify([h.serialize() for h in History.query.all()])
+    if request.method == "POST":
+        data = json.loads(request.data)
+        score = data["score"]
+        deck_id = data["deck"]
+        deck = Decks.query.get(deck_id)
+        history = History(deck=deck.id, score=score, timestamp=datetime.now())
+        db.session.add(history)
+        db.session.commit()
+        notify_webhook.apply_async((current_user.email, deck.name, score))
+        return "", 201
 
 
 if __name__ == "__main__":

@@ -112,12 +112,14 @@
         let score = correct / seen_cards.length * 100
         alert(`Done! You scored ${score}%`)
         $.ajax({
-          url: '/chat?auth_token=' + token,
+          url: '/scores/{{ deck.id }}?auth_token=' + token,
           method: 'POST',
-          data: JSON.stringify({score: score, deck: DECK_NAME}),
+          data: JSON.stringify({score: score, deck: {{ deck.id }}}),
           contentType: 'application/json',
           processData: false,
-          success: window.location.reload
+          success: function(resp) {
+            window.location.reload()
+          }
         })
       }
       let card = cards.pop()

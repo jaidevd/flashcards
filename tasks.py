@@ -107,10 +107,12 @@ def notify_import(deck_name, email):
 @app.task
 def notify_webhook(email, deck, score):
     text = f"Hello! You just scored {round(score, 2)}% on the {deck} deck!"
-    url = secrets["webhooks"][email]
-    resp = requests.post(
-        url,
-        headers={"Content-Type": "application/json"},
-        data=json.dumps({"text": text}),
-    )
-    return resp.json(), resp.status_code
+    if email in secrets["webhooks"]:
+        url = secrets["webhooks"][email]
+        resp = requests.post(
+            url,
+            headers={"Content-Type": "application/json"},
+            data=json.dumps({"text": text}),
+        )
+        return resp.json(), resp.status_code
+    return "No webhook for email {email}", 404
