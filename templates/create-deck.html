@@ -33,38 +33,55 @@
   </nav>
   <!-- navbar -->
   <div class="container py-3">
-    <div class="row align-items-center">
-      <div class="col-sm">
-        <a class="btn btn-primary" href="/deck/create" id="deck-create"><i class="fas fa-plus"></i> Create A Deck</a>
-      </div>
-      <div class="col-sm">
-        <a class="btn btn-primary" href="/card/create" id="card-create"><i class="fas fa-plus"></i> Add A Card</a>
-      </div>
-      <div class="col-sm">
-        <a class="btn btn-primary" id="report"><i class="fas fa-paper-plane"></i> Send Progress Report</a>
-      </div>
-    </div>
     <div class="row">
-      <div class="col mx-3">
-        <div class="row pt-3">
-          <h3>My Decks</h3>
+      <div class="col-sm-3 mx-3">
+        <div class="row">
+          <h3>Create a Deck</h3>
         </div>
         <div class="row">
-          <ul id="decklist" class="list-group">
-            <li v-for="deck in current_user.decks"class="list-group-item d-flex justify-content-between align-items-center">
-              <a :href="deck.deck_url">{{ deck.name }}</a>
-              <span class="badge badge-danger badge-pill bg-success">{{ deck.n_cards }} cards</span>
-              <button class="btn btn-danger deldeck" :id="deck.del_id"><i class="fas fa-trash"></i></button>
-            </li>
-          </ul>
+          <form action="/deck/" method="POST" @submit="createDeck">
+            <div class="form-group row">
+              <label for="deckname">Name of the Deck:</label>
+              <input class="form-control" type="text" name="deckname" id="deckname" required>
+            </div>
+            <input type="hidden" name="cards" id="cardsindeck">
+            <div class="form-group row pt-3 droppable pb-2">
+              <div class="card bg-light border-dark">
+                <div class="card-body">
+                  <div class="card-title">Drop a card here to add it to the deck.</div>
+                  <div class="card-text">
+                    <div class="btn btn-info position-relative">
+                      Cards Added
+                      <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="nCards">
+                        0
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <button class="btn btn-primary">Save Deck</button>
+          </form>
         </div>
+      </div>
         <!-- Imports here -->
-        <div class="row pt-3">
-          <h3>Import a Deck from <a href="https://ankiweb.net/shared/decks/">Anki</a></h3>
-        </div>
+      <div class="col overflow-auto">
         <div class="row">
-          <div class="form-group">
-            <div class="dropzone" id="apkg" name="apkg"></div>
+          <div class="row row-cols-1 row-cols-md-3 g-4 cardcol">
+              <div v-for="ucard in current_user.cards" class="card usercard" :id="ucard.id">
+                <div class="front">
+                  <img :id="ucard.imgid" :src="ucard.src" class="card-img-top">
+                  <div class="card-body">
+                    <p class="card-text text-center">{{ ucard.front }}</p>
+                  </div>
+                </div>
+                <div class="back d-none">
+                  <img class="card-img-top" :src="ucard.src" alt="An Image Goes Here">
+                  <div class="card-body">
+                    <p class="card-text card-text-back text-center">{{ ucard.back }}</p>
+                  </div>
+                </div>
+              </div>
           </div>
         </div>
       </div>
@@ -81,36 +98,13 @@
   <script src="https://unpkg.com/dropzone@6.0.0-beta.1/dist/dropzone-min.js"></script>
   <script src="https://unpkg.com/vue@3"></script>
   <script src="/static/navbar.js"></script>
-  <script src="/static/index.js"></script>
+  <script src="/static/deck.js"></script>
   <script>
-    var token = localStorage.getItem('flashcard-token')
-    $('.dropzone').dropzone({ // camelized version of the `id`
-      url: '/import?auth_token=' + localStorage.getItem('flashcard-token'),
-      dictDefaultMessage: "Upload an Anki deck",
-      init: function() {
-        this.on('success', function(fileObj) {
-          window.alert("Your deck is being imported, please check your email for notifications.")
-        })
-      }
-    })
-    $('.deldeck').on('click', function() {
-      let deck = $(this).attr('id').replace('deldeck-', '')
-      $.ajax({
-        url: `/deck/${deck}?auth_token=` + token,
-        method: 'DELETE',
-        success: function() {
-          window.location.reload()
-        }
-      })
-    })
-    $('#report').on('click', function() {
-      fetch('/report?auth_token=' + token)
-        .then((r) => {
-          if (r.ok) {
-            alert('Your report is being generated. Please check your inbox.')
-          }
-        })
-    })
+    // var token = localStorage.getItem('flashcard-token')
+    // $('form').on('submit', function(e) {
+    //   e.preventDefault()
+    //   console.log($(this).serializeArray())
+    // })
   </script>
 </body>
 

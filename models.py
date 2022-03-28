@@ -67,6 +67,9 @@ class Cards(db.Model):
     image = db.Column(db.String())
     tags = db.Column(db.String())
 
+    def serialize(self):
+        return {k.name: self.__dict__[k.name] for k in self.__table__.columns}
+
 
 class Decks(db.Model):
     __tablename__ = "decks"
@@ -90,10 +93,12 @@ class Decks(db.Model):
             for card in cards:
                 fout.write(op.join(imagepath, card.image), f"images/{card.image}")
 
-    def get_cards(self):
+    def get_cards(self, serialized=True):
         cards = []
         for card in DeckCard.query.filter_by(deck=self.id).all():
             cards.append(Cards.query.get(card.card))
+        if serialized:
+            return [c.serialize() for c in cards]
         return cards
 
     def last_reviewed(self):
@@ -125,6 +130,12 @@ class Decks(db.Model):
         if history.count():
             return round(sum([k.score for k in history]) / history.count(), 2)
         return 0
+
+    def serialize(self):
+        deck = {k.name: self.__dict__[k.name] for k in self.__table__.columns}
+        deck["cards"] = self.get_cards(serialized=True)
+        deck["n_cards"] = len(deck["cards"])
+        return deck
 
 
 class History(db.Model):
