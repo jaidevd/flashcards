@@ -120,7 +120,7 @@ class Decks(db.Model):
             .first()
         )
         if history:
-            return history.score
+            return round(history.score, 2)
         return 0
 
     def avg_score(self):
@@ -135,6 +135,10 @@ class Decks(db.Model):
         deck = {k.name: self.__dict__[k.name] for k in self.__table__.columns}
         deck["cards"] = self.get_cards(serialized=True)
         deck["n_cards"] = len(deck["cards"])
+        t, ago = self.last_reviewed()
+        deck["last_reviewed"] = {"t": t, "ago": ago}
+        deck["latest_score"] = self.latest_score()
+        deck["avg_score"] = self.avg_score()
         return deck
 
 

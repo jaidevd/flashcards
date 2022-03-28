@@ -22,7 +22,7 @@
         <span class="px-4">Learn Faster with Flashcards!</span>
     </a>
     <div class="collapse navbar-collapse me-auto" id="navbarSupportedContent">
-      <a v-if="current_user.is_authenticated" class="nav-item nav-link" href="/login" title="Log in again" data-placement="bottom">
+      <a v-cloak v-if="current_user.is_authenticated" class="nav-item nav-link" href="/login" title="Log in again" data-placement="bottom">
         {{ current_user.email }}
       </a>
       <a v-if="current_user.is_authenticated" class="nav-item nav-link" href="/logout/" title="Log out" data-placement="bottom">Log Out <i class="fas fa-sign-out-alt"></i></a>
@@ -50,6 +50,23 @@
           <h3>My Decks</h3>
         </div>
         <div class="row">
+          <table id="decklist" class="table table-striped table-hover">
+            <tr>
+              <th>Deck</th>
+              <th># Cards</th>
+              <th>Last Reviewed</th>
+              <th>Latest Score</th>
+              <th>Average Score</th>
+            </tr>
+            <tr v-cloak v-for="deck in current_user.decks">
+              <td><a :href="deck.deck_url">{{ deck.name }}</a></td>
+              <td>{{ deck.n_cards }}</td>
+              <td><p><abbr :title="deck.last_reviewed.t">{{ deck.last_reviewed.ago }}</abbr> ago</p></td>
+              <td>{{ deck.latest_score }} %</td>
+              <td>{{ deck.avg_score }} %</td>
+            </tr>
+          </table>
+          <!--
           <ul id="decklist" class="list-group">
             <li v-for="deck in current_user.decks"class="list-group-item d-flex justify-content-between align-items-center">
               <a :href="deck.deck_url">{{ deck.name }}</a>
@@ -57,6 +74,7 @@
               <button class="btn btn-danger deldeck" :id="deck.del_id"><i class="fas fa-trash"></i></button>
             </li>
           </ul>
+          -->
         </div>
         <!-- Imports here -->
         <div class="row pt-3">
