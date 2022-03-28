@@ -3,7 +3,9 @@ Vue.createApp({
   data() {
     return {
       token: window.localStorage.getItem('flashcard-token'),
-      current_user: {}
+      current_user: {},
+      decklink: `/deck/create?auth_token=` + window.localStorage.getItem('flashcard-token'),
+      cardlink: `/card/create?auth_token=` + window.localStorage.getItem('flashcard-token'),
     }
   },
   mounted() {
@@ -18,5 +20,15 @@ Vue.createApp({
         deck.del_id = `deldeck-${deck.id}`
       })
     })
+  },
+  methods: {
+    sendReport() {
+      fetch('/report?auth_token=' + token)
+      .then((r) => {
+        if (r.ok) {
+          alert('Your report is being generated. Please check your inbox.')
+        }
+      })
+    }
   }
-}).mount('#decklist')
+}).mount('.container')

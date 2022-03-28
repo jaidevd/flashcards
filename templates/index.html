@@ -35,13 +35,13 @@
   <div class="container py-3">
     <div class="row align-items-center">
       <div class="col-sm">
-        <a class="btn btn-primary" href="/deck/create" id="deck-create"><i class="fas fa-plus"></i> Create A Deck</a>
+        <a class="btn btn-primary" :href="decklink" id="deck-create"><i class="fas fa-plus"></i> Create A Deck</a>
       </div>
       <div class="col-sm">
-        <a class="btn btn-primary" href="/card/create" id="card-create"><i class="fas fa-plus"></i> Add A Card</a>
+        <a class="btn btn-primary" :href="cardlink" id="card-create"><i class="fas fa-plus"></i> Add A Card</a>
       </div>
       <div class="col-sm">
-        <a class="btn btn-primary" id="report"><i class="fas fa-paper-plane"></i> Send Progress Report</a>
+        <div class="btn btn-primary" @click="sendReport" id="report"><i class="fas fa-paper-plane"></i> Send Progress Report</div>
       </div>
     </div>
     <div class="row">
@@ -66,17 +66,7 @@
               <td>{{ deck.avg_score }} %</td>
             </tr>
           </table>
-          <!--
-          <ul id="decklist" class="list-group">
-            <li v-for="deck in current_user.decks"class="list-group-item d-flex justify-content-between align-items-center">
-              <a :href="deck.deck_url">{{ deck.name }}</a>
-              <span class="badge badge-danger badge-pill bg-success">{{ deck.n_cards }} cards</span>
-              <button class="btn btn-danger deldeck" :id="deck.del_id"><i class="fas fa-trash"></i></button>
-            </li>
-          </ul>
-          -->
         </div>
-        <!-- Imports here -->
         <div class="row pt-3">
           <h3>Import a Deck from <a href="https://ankiweb.net/shared/decks/">Anki</a></h3>
         </div>
@@ -110,24 +100,6 @@
           window.alert("Your deck is being imported, please check your email for notifications.")
         })
       }
-    })
-    $('.deldeck').on('click', function() {
-      let deck = $(this).attr('id').replace('deldeck-', '')
-      $.ajax({
-        url: `/deck/${deck}?auth_token=` + token,
-        method: 'DELETE',
-        success: function() {
-          window.location.reload()
-        }
-      })
-    })
-    $('#report').on('click', function() {
-      fetch('/report?auth_token=' + token)
-        .then((r) => {
-          if (r.ok) {
-            alert('Your report is being generated. Please check your inbox.')
-          }
-        })
     })
   </script>
 </body>

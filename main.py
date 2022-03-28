@@ -93,7 +93,7 @@ def upload(filename):
 
 @app.route("/card/", defaults={"card_id": ""}, methods=["GET", "POST"])
 @app.route("/card/<string:card_id>")
-@cache.cached(timeout=3600)
+# @cache.cached(timeout=3600)
 @login_required
 def card(card_id):
     if request.method == "GET":
