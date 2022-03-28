@@ -89,12 +89,13 @@
   <script src="/static/navbar.js"></script>
   <script src="/static/card.js"></script>
   <script>
+    let token = window.localStorage.getItem('flashcard-token')
     $('.dropzone').dropzone({ // camelized version of the `id`
-      url: '/upload/',
+      url: '/upload/?auth_token=' + token,
       dictDefaultMessage: "Upload an Image (optional)",
       init: function() {
         this.on('success', function(fileObj) {
-          $('.card-img-top').attr('src', '/upload/' + fileObj.name)
+          $('.card-img-top').attr('src', '/upload/' + fileObj.name + '?auth_token=' + token)
           $('#cardimg').val(fileObj.name)
         })
       }

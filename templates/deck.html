@@ -67,12 +67,15 @@
       </div>
       <div class="col mx-3">
         <div class="row">
-          <div class="col-sm-6">
+          <div class="col-sm-4">
             <div class="btn btn-success" @click="startExercise" id="start-exercise">Ready? Start the Exercise!</div>
           </div>
-          <div class="col-sm-6">
+          <div class="col-sm-4">
             <a class="btn btn-primary" :href="exportLink">
               Export Deck</a>
+          </div>
+          <div class="col-sm-4">
+            <a class="btn btn-danger" @click="deleteDeck"><i class="fas fa-trash"></i> Delete</a>
           </div>
         </div>
         <div class="row pt-3 pb-3 cardpreview">

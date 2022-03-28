@@ -39,7 +39,7 @@
           <h3>Create a Deck</h3>
         </div>
         <div class="row">
-          <form action="/deck/" method="POST" @submit="createDeck">
+          <form @submit="createDeck">
             <div class="form-group row">
               <label for="deckname">Name of the Deck:</label>
               <input class="form-control" type="text" name="deckname" id="deckname" required>
@@ -60,7 +60,7 @@
                 </div>
               </div>
             </div>
-            <button class="btn btn-primary">Save Deck</button>
+            <button type="submit" class="btn btn-primary">Save Deck</button>
           </form>
         </div>
       </div>
