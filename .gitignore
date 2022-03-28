@@ -134,4 +134,4 @@ node_modules/*
 dump.rdb
 exports/*.zip
 celerybeat-schedule*
-reports/*.pdf
+reports/*

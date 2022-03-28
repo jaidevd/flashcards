@@ -3,15 +3,7 @@ from datetime import datetime
 import os
 import json
 from mimetypes import guess_type
-from flask import (
-    render_template,
-    request,
-    abort,
-    redirect,
-    url_for,
-    make_response,
-    jsonify,
-)
+from flask import request, abort, redirect, make_response, jsonify
 
 from flask_security import (
     Security,
@@ -21,14 +13,24 @@ from flask_security import (
     logout_user,
 )
 from flask_caching import Cache
+from flask_cors import CORS
 
 
 from models import User, Cards, Decks, DeckCard, db, Role, History
-from tasks import anki_import, notify_import, _mkdir, create_app, notify_webhook, progress_report
+from tasks import (
+    anki_import,
+    notify_import,
+    _mkdir,
+    create_app,
+    notify_webhook,
+    progress_report,
+)
 
 
 op = os.path
 app = create_app()
+CORS(app)
+
 db.init_app(app)
 cache = Cache(app)
 ROOT = op.dirname(__file__)
@@ -38,17 +40,34 @@ user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 security = Security(app, user_datastore)
 
 
+@app.route("/user")
+def user():
+    data = {}
+    for attr in ["is_authenticated", "id", "email"]:
+        data[attr] = getattr(current_user, attr, "")
+    if current_user.is_authenticated:
+        data["decks"] = [
+            d.serialize() for d in Decks.query.filter_by(user=current_user.id)
+        ]
+        data["cards"] = [
+            c.serialize() for c in Cards.query.filter_by(user=current_user.id)
+        ]
+    return jsonify(data)
+
+
 @app.route("/")
 @login_required
-# @cache.cached(timeout=60)
+@cache.cached(timeout=60)
 def index():
-    if current_user.is_authenticated:
-        cards = Cards.query.filter_by(user=current_user.id)
-        decks = Decks.query.filter_by(user=current_user.id)
-        return render_template(
-            "index.html", cards=cards, decks=decks, token=request.args["auth_token"]
-        )
-    return redirect(url_for("login"))
+    # if current_user.is_authenticated:
+    #     cards = Cards.query.filter_by(user=current_user.id)
+    #     decks = Decks.query.filter_by(user=current_user.id)
+    #     return url_for(
+    #         "index.html", cards=cards, decks=decks, token=request.args.get("auth_token", "")
+    #     )
+    # return redirect("/login")
+    with open("templates/index.html", "rb") as fin:
+        return fin.read()
 
 
 @app.route("/logout/", methods=["GET"])
@@ -81,14 +100,13 @@ def upload(filename):
 
 @app.route("/card/", defaults={"card_id": ""}, methods=["GET", "POST"])
 @app.route("/card/<string:card_id>")
-@cache.cached(timeout=3600)
+# @cache.cached(timeout=3600)
 @login_required
 def card(card_id):
     if request.method == "GET":
         if card_id == "create":
-            return render_template("create-card.html")
-        card_data = Cards.query.filter_by(card_id=int(card_id))
-        return render_template("card.html", card_data)
+            with open('templates/create-card.html', 'rb') as fin:
+                return fin.read()
     if request.method == "POST":
         if card_id:
             abort(400, "card_id not allowed when POSTing a card.")
@@ -104,15 +122,20 @@ def card(card_id):
 
 
 @app.route("/deck/", defaults={"deck_id": ""}, methods=["POST", "GET"])
-@app.route("/deck/<int:deck_id>", methods=["GET", "POST", "DELETE"])
+@app.route("/deck/<string:deck_id>", methods=["GET", "POST", "DELETE"])
 @login_required
-@cache.cached(timeout=300)
+@cache.cached(timeout=10)
 def deck(deck_id):
     if request.method == "GET":
-        deck = Decks.query.get(deck_id)
-        return render_template(
-            "deck.html", deck=deck, token=request.args.get("auth_token", "")
-        )
+        if deck_id == "create":
+            with open("templates/create-deck.html", "rb") as fin:
+                return fin.read()
+        deck_id = request.args.get('id', False)
+        if deck_id:
+            deck = Decks.query.get(deck_id)
+            return jsonify(deck.serialize())
+        with open("templates/deck.html", "rb") as fin:
+            return fin.read()
     if request.method == "DELETE":
         deck = Decks.query.get(deck_id)
         db.session.delete(deck)
@@ -140,21 +163,24 @@ def deck(deck_id):
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
+    logout_user()
     if request.method == "GET":
-        return render_template("signup.html", existing_user=False)
+        with open("templates/signup.html", 'rb') as fin:
+            return fin.read()
     if request.method == "POST":
-        email = request.form["email"]
+        data = json.loads(request.data)
+        email = data['email']
         existing_user = User.query.filter_by(email=email).first()
         if existing_user is not None:
-            return render_template("signup.html", existing_user=existing_user)
+            abort(400, existing_user.email)
         user = User(
             email=email,
-            password=request.form["password-1"],
+            password=data['password'],
             roles=[Role.query.get(1)],
         )
         db.session.add(user)
         db.session.commit()
-        return redirect("/login")
+        return "", 201
 
 
 @app.route("/import", methods=["POST"])
@@ -212,10 +238,10 @@ def export(deck_id):
     return resp
 
 
-@app.route("/report", methods=['GET'])
+@app.route("/report", methods=["GET"])
 @login_required
 def send_report():
-    progress_report.apply_async((current_user.id, ))
+    progress_report.apply_async((current_user.id,))
     return "", 200
 
 

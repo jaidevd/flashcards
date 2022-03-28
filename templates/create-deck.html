@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <title>Learn Faster with Flashcards</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+  <link rel="shortcut icon" href="/static/favicon.ico">
+  <script src="https://kit.fontawesome.com/9f1a58d476.js" crossorigin="anonymous"></script>
+  <link href="https://unpkg.com/dropzone@6.0.0-beta.1/dist/dropzone.css" rel="stylesheet" type="text/css" />
+  <link rel="stylesheet" href="/static/cardstyle.css">
+</head>
+
+<body>
+  <!-- navbar -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light py-0 px-2">
+    <a class="navbar-brand" :href="homelink" >
+      <!-- Replace with your logo. Just specify height, not width. -->
+      <img height="36" src="/static/IITMOD-Logo.svg" alt="Logo" class="d-inline-block">
+        <span class="px-4">Learn Faster with Flashcards!</span>
+    </a>
+    <div class="collapse navbar-collapse me-auto" id="navbarSupportedContent">
+      <a v-if="current_user.is_authenticated" class="nav-item nav-link" href="/login" title="Log in again" data-placement="bottom">
+        {{ current_user.email }}
+      </a>
+      <a v-if="current_user.is_authenticated" class="nav-item nav-link" href="/logout/" title="Log out" data-placement="bottom">Log Out <i class="fas fa-sign-out-alt"></i></a>
+      <a v-else class="nav-item nav-link" href="/login" title="Log in again" data-placement="bottom">
+        Log in
+      </a>
+    </div>
+  </nav>
+  <!-- navbar -->
+  <div class="container py-3">
+    <div class="row">
+      <div class="col-sm-3 mx-3">
+        <div class="row">
+          <h3>Create a Deck</h3>
+        </div>
+        <div class="row">
+          <form action="/deck/" method="POST">
+            <div class="form-group row">
+              <label for="deckname">Name of the Deck:</label>
+              <input class="form-control" type="text" name="deckname" id="deckname" required>
+            </div>
+            <input type="hidden" name="cards" id="cardsindeck">
+            <div class="form-group row pt-3 droppable pb-2">
+              <div class="card bg-light border-dark">
+                <div class="card-body">
+                  <div class="card-title">Drop a card here to add it to the deck.</div>
+                  <div class="card-text">
+                    <div class="btn btn-info position-relative">
+                      Cards Added
+                      <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="nCards">
+                        0
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <button class="btn btn-primary">Save Deck</button>
+          </form>
+        </div>
+      </div>
+        <!-- Imports here -->
+      <div class="col overflow-auto">
+        <div class="row">
+          <div class="row row-cols-1 row-cols-md-3 g-4 cardcol">
+              <div v-for="ucard in current_user.cards" class="card usercard" :id="ucard.id">
+                <div class="front">
+                  <img :id="ucard.imgid" :src="ucard.src" class="card-img-top">
+                  <div class="card-body">
+                    <p class="card-text text-center">{{ ucard.front }}</p>
+                  </div>
+                </div>
+                <div class="back d-none">
+                  <img class="card-img-top" :src="ucard.src" alt="An Image Goes Here">
+                  <div class="card-body">
+                    <p class="card-text card-text-back text-center">{{ ucard.back }}</p>
+                  </div>
+                </div>
+              </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="text-muted pt-3">
+      <p class="float-center">&copy; Copyright 2021, Jaidev Deshpande / IIT Madras</p>
+      <p class="float-center">All images used here have been released under a creative commons license by their respective creators.</p>
+    </footer>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+  <script src="https://code.jquery.com/ui/1.13.0/jquery-ui.min.js" integrity="sha256-hlKLmzaRlE8SCJC1Kw8zoUbU8BxA+8kR3gseuKfMjxA=" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/dropzone@6.0.0-beta.1/dist/dropzone-min.js"></script>
+  <script src="https://unpkg.com/vue@3"></script>
+  <script src="/static/navbar.js"></script>
+  <script src="/static/deck.js"></script>
+  <script>
+    var token = localStorage.getItem('flashcard-token')
+    $('form').on('submit', function(e) {
+      e.preventDefault()
+      console.log($(this).serializeArray())
+    })
+  </script>
+</body>
+
+</html>
