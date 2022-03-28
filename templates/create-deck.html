@@ -39,7 +39,7 @@
           <h3>Create a Deck</h3>
         </div>
         <div class="row">
-          <form action="/deck/" method="POST">
+          <form action="/deck/" method="POST" @submit="createDeck">
             <div class="form-group row">
               <label for="deckname">Name of the Deck:</label>
               <input class="form-control" type="text" name="deckname" id="deckname" required>
@@ -100,11 +100,11 @@
   <script src="/static/navbar.js"></script>
   <script src="/static/deck.js"></script>
   <script>
-    var token = localStorage.getItem('flashcard-token')
-    $('form').on('submit', function(e) {
-      e.preventDefault()
-      console.log($(this).serializeArray())
-    })
+    // var token = localStorage.getItem('flashcard-token')
+    // $('form').on('submit', function(e) {
+    //   e.preventDefault()
+    //   console.log($(this).serializeArray())
+    // })
   </script>
 </body>
 

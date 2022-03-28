@@ -59,13 +59,6 @@ def user():
 @login_required
 @cache.cached(timeout=60)
 def index():
-    # if current_user.is_authenticated:
-    #     cards = Cards.query.filter_by(user=current_user.id)
-    #     decks = Decks.query.filter_by(user=current_user.id)
-    #     return url_for(
-    #         "index.html", cards=cards, decks=decks, token=request.args.get("auth_token", "")
-    #     )
-    # return redirect("/login")
     with open("templates/index.html", "rb") as fin:
         return fin.read()
 
@@ -105,7 +98,7 @@ def upload(filename):
 def card(card_id):
     if request.method == "GET":
         if card_id == "create":
-            with open('templates/create-card.html', 'rb') as fin:
+            with open("templates/create-card.html", "rb") as fin:
                 return fin.read()
     if request.method == "POST":
         if card_id:
@@ -130,7 +123,7 @@ def deck(deck_id):
         if deck_id == "create":
             with open("templates/create-deck.html", "rb") as fin:
                 return fin.read()
-        deck_id = request.args.get('id', False)
+        deck_id = request.args.get("id", False)
         if deck_id:
             deck = Decks.query.get(deck_id)
             return jsonify(deck.serialize())
@@ -165,17 +158,17 @@ def deck(deck_id):
 def signup():
     logout_user()
     if request.method == "GET":
-        with open("templates/signup.html", 'rb') as fin:
+        with open("templates/signup.html", "rb") as fin:
             return fin.read()
     if request.method == "POST":
         data = json.loads(request.data)
-        email = data['email']
+        email = data["email"]
         existing_user = User.query.filter_by(email=email).first()
         if existing_user is not None:
             abort(400, existing_user.email)
         user = User(
             email=email,
-            password=data['password'],
+            password=data["password"],
             roles=[Role.query.get(1)],
         )
         db.session.add(user)

@@ -133,8 +133,8 @@ class Decks(db.Model):
 
     def serialize(self):
         deck = {k.name: self.__dict__[k.name] for k in self.__table__.columns}
-        deck['cards'] = self.get_cards(serialized=True)
-        deck['n_cards'] = len(deck['cards'])
+        deck["cards"] = self.get_cards(serialized=True)
+        deck["n_cards"] = len(deck["cards"])
         return deck
 
 

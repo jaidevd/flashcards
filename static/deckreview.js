@@ -74,8 +74,8 @@ Vue.createApp({
     startExercise() {
       this.exercise_on = !(this.exercise_on)
       let text = this.exercise_on ? "Done? Stop the Exercise." : "Ready? Start the Exercise!"
-      $(this).text(text)
-      $(this).toggleClass("btn-danger")
+      $('#start-exercise').text(text)
+      $('#start-exercise').toggleClass("btn-warning")
       $('.cardrow').toggleClass('d-none')
       if (this.exercise_on) {
         this.cards = shuffle($('.usercard').toArray())

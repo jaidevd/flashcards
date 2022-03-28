@@ -7,7 +7,7 @@ navApp = Vue.createApp({
     }
   },
   mounted() {
-    fetch("http://localhost:5000/user?auth_token=" + this.token).then((resp) => {
+    fetch("/user?auth_token=" + this.token).then((resp) => {
       if (resp.ok) {
         return resp.json()
       }

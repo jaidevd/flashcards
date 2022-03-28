@@ -52,7 +52,7 @@
         <div class="row">
           <ul id="decklist" class="list-group">
             <li v-for="deck in current_user.decks"class="list-group-item d-flex justify-content-between align-items-center">
-              <a :href="deck.deck_url" class="tokenlink">{{ deck.name }}</a>
+              <a :href="deck.deck_url">{{ deck.name }}</a>
               <span class="badge badge-danger badge-pill bg-success">{{ deck.n_cards }} cards</span>
               <button class="btn btn-danger deldeck" :id="deck.del_id"><i class="fas fa-trash"></i></button>
             </li>
@@ -83,73 +83,34 @@
   <script src="/static/navbar.js"></script>
   <script src="/static/index.js"></script>
   <script>
-    var currentCards = []
-    $(".usercard").dblclick(function() {
-      $(this).toggleClass("flip")
-      $(this).find('.front').toggleClass('d-none')
-      $(this).find('.back').toggleClass('d-none')
-    })
-    $('.usercard').draggable({
-      revert: "invalid",
-      helper: function(event) {
-        let el = $(event.currentTarget)
-        let icon = $($(event.currentTarget)).clone()
-        $(icon).height(el.height())
-        $(icon).width(el.width())
-        return icon
+    var token = localStorage.getItem('flashcard-token')
+    $('.dropzone').dropzone({ // camelized version of the `id`
+      url: '/import?auth_token=' + localStorage.getItem('flashcard-token'),
+      dictDefaultMessage: "Upload an Anki deck",
+      init: function() {
+        this.on('success', function(fileObj) {
+          window.alert("Your deck is being imported, please check your email for notifications.")
+        })
       }
     })
-  $('.droppable').droppable({
-    drop: function(event, ui) {
-      let newid = ui.draggable[0].id
-      if ((currentCards.length == 0) || (!(currentCards.includes(newid)))) {
-        currentCards.push(newid)
-        $('#cardsindeck').val(JSON.stringify(currentCards))
-        $('#nCards').text(currentCards.length)
-      }
-    }
-  })
-  var token = localStorage.getItem('flashcard-token')
-  $('.tokenlink').each(function(ix, elem) {
-    $(elem).attr('href', $(elem).attr('href') + '?auth_token=' + token)
-  })
-  $('form').each(function(ix, elem) {
-      $(elem).attr('action', $(elem).attr('action') + '?auth_token=' + token)
-  })
-  $('form').on('submit', function(e) {
-
-    e.preventDefault()
-    console.log('before')
-    console.log($(this).serializeArray())
-    console.log('after')
-  })
-  $('.dropzone').dropzone({ // camelized version of the `id`
-    url: '/import?auth_token=' + localStorage.getItem('flashcard-token'),
-    dictDefaultMessage: "Upload an Anki deck",
-    init: function() {
-      this.on('success', function(fileObj) {
-        window.alert("Your deck is being imported, please check your email for notifications.")
-      })
-    }
-  })
-  $('.deldeck').on('click', function() {
-    let deck = $(this).attr('id').replace('deldeck-', '')
-    $.ajax({
-      url: `/deck/${deck}?auth_token=` + token,
-      method: 'DELETE',
-      success: function() {
-        window.location.reload()
-      }
-    })
-  })
-  $('#report').on('click', function() {
-    fetch('/report?auth_token=' + token)
-      .then((r) => {
-        if (r.ok) {
-          alert('Your report is being generated. Please check your inbox.')
+    $('.deldeck').on('click', function() {
+      let deck = $(this).attr('id').replace('deldeck-', '')
+      $.ajax({
+        url: `/deck/${deck}?auth_token=` + token,
+        method: 'DELETE',
+        success: function() {
+          window.location.reload()
         }
       })
-  })
+    })
+    $('#report').on('click', function() {
+      fetch('/report?auth_token=' + token)
+        .then((r) => {
+          if (r.ok) {
+            alert('Your report is being generated. Please check your inbox.')
+          }
+        })
+    })
   </script>
 </body>
 

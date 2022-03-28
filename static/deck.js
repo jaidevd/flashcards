@@ -37,7 +37,7 @@ Vue.createApp({
     }
   },
   mounted() {
-    fetch("http://localhost:5000/user?auth_token=" + this.token).then((resp) => {
+    fetch("/user?auth_token=" + this.token).then((resp) => {
       if (resp.ok) {
         return resp.json()
       }
@@ -54,5 +54,20 @@ Vue.createApp({
   },
   updated() {
     registerCardListeners()
+  },
+  methods: {
+    createDeck() {
+      e.preventDefault()
+      $.ajax({
+        url: '/deck/?auth_token=' + this.token,
+        method: 'POST',
+        data: JSON.stringify($('form').serializeArray()),
+        processData: false,
+        contentType: 'application/json',
+        success: function(data) {
+          window.location.href = "/?auth_token=" + this.token
+        }.bind(this)
+      })
+    }
   }
 }).mount('.cardcol')

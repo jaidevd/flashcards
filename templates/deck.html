@@ -107,61 +107,11 @@
   <script src="/static/navbar.js"></script>
   <script src="/static/deckreview.js"></script>
   <script>
-
     var token = localStorage.getItem('flashcard-token')
-    // var seen_cards = []
-    // var correct = 0
-
-    // $(".usercard").dblclick(function() {
-    //   $(this).toggleClass("flip")
-    //   $(this).find('.front').toggleClass('d-none')
-    //   $(this).find('.back').toggleClass('d-none')
-    // })
-
-    // $('#start-exercise').click(function() {
-    //   exercise_on = !(exercise_on)
-    //   let text = exercise_on ? "Done? Stop the Exercise." : "Ready? Start the Exercise!"
-    //   $(this).text(text)
-    //   $(this).toggleClass("btn-danger")
-    //   $('.cardrow').toggleClass('d-none')
-    //   if (exercise_on) {
-    //     cards = shuffle($('.usercard').toArray())
-    //     $('#cardprompt').attr('disabled', false)
-    //     seen_cards = []
-    //     correct = 0
-    //     $('.cardpreview').removeClass('d-none')
-    //     $('#cardanswer').removeClass('d-none')
-    //     passThroughCards()
-    //   } else {
-    //     $('.cardpreview').empty()
-    //     $('#cardanswer').addClass('d-none')
-    //   }
-    // })
-  var toastElList = [].slice.call(document.querySelectorAll('.toast'))
-  var toastList = toastElList.map(function (toastEl) {
-    return new bootstrap.Toast(toastEl)
-  })
-  // $('#cardanswer').submit(function(evt) {
-  //   evt.preventDefault()
-  //   let actual = $('#cardprompt').val()
-  //   let ideal = $('.cardpreview').find('.card').find('.back').find('.card-body').find('.card-text').text()
-  //   if (ideal.toLowerCase() == actual.toLowerCase()) {
-  //     correct = correct + 1
-  //     $('.rightwrong').text('Correct!')
-  //     $('.rightwrong').addClass('text-success')
-  //     $('.rightwrong').removeClass('text-danger')
-  //   } else {
-  //     $('.rightwrong').text('Incorrect 😓')
-  //     $('.rightwrong').addClass('text-danger')
-  //     $('.rightwrong').removeClass('text-success')
-  //   }
-  //   $('.correctanswer').text(ideal)
-  //   $('.toast').show()
-  //   setTimeout(function() {
-  //     $('.toast').hide()
-  //     passThroughCards()
-  //   }, 1500)
-  // })
+    var toastElList = [].slice.call(document.querySelectorAll('.toast'))
+    var toastList = toastElList.map(function (toastEl) {
+      return new bootstrap.Toast(toastEl)
+    })
   </script>
 </body>
 
