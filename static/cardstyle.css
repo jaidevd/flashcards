@@ -33,3 +33,7 @@
 .cardcol {
   max-height: 50vmax;
 }
+
+[v-cloak] {
+  display: none;
+}

@@ -40,6 +40,10 @@ user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 security = Security(app, user_datastore)
 
 
+def is_not_get(*args, **kwargs):
+    return request.method != 'GET'
+
+
 @app.route("/user")
 def user():
     data = {}
@@ -71,7 +75,7 @@ def logout():
 
 @app.route("/upload/", defaults={"filename": ""}, methods=["POST", "GET"])
 @app.route("/upload/<path:filename>")
-@cache.cached(timeout=3600)
+@cache.cached(timeout=3600, unless=is_not_get)
 @login_required
 def upload(filename):
     path = op.join(ROOT, "static", "uploads", current_user.email)
@@ -93,7 +97,7 @@ def upload(filename):
 
 @app.route("/card/", defaults={"card_id": ""}, methods=["GET", "POST"])
 @app.route("/card/<string:card_id>")
-# @cache.cached(timeout=3600)
+@cache.cached(timeout=60, unless=is_not_get)
 @login_required
 def card(card_id):
     if request.method == "GET":
@@ -103,11 +107,12 @@ def card(card_id):
     if request.method == "POST":
         if card_id:
             abort(400, "card_id not allowed when POSTing a card.")
+        form = {k['name']: k['value'] for k in json.loads(request.data)}
         card = Cards(
             user=current_user.id,
-            front=request.form["cardfront"],
-            back=request.form["cardback"],
-            image=request.form["cardimg"],
+            front=form["cardfront"],
+            back=form["cardback"],
+            image=form["cardimg"],
         )
         db.session.add(card)
         db.session.commit()
@@ -116,8 +121,8 @@ def card(card_id):
 
 @app.route("/deck/", defaults={"deck_id": ""}, methods=["POST", "GET"])
 @app.route("/deck/<string:deck_id>", methods=["GET", "POST", "DELETE"])
+@cache.cached(timeout=60, unless=is_not_get)
 @login_required
-@cache.cached(timeout=10)
 def deck(deck_id):
     if request.method == "GET":
         if deck_id == "create":
@@ -138,12 +143,14 @@ def deck(deck_id):
         db.session.commit()
         return "", 200
     if request.method == "POST":
-        deck = Decks(name=request.form["deckname"], user=current_user.id)
+
+        form = {k['name']: k['value'] for k in json.loads(request.data)}
+        deck = Decks(name=form["deckname"], user=current_user.id)
         db.session.add(deck)
         db.session.commit()
 
         # Add cards to deck
-        for card in json.loads(request.form["cards"]):
+        for card in json.loads(form["cards"]):
             card_id = int(card.split("-")[-1])
             card = Cards.query.get(card_id)
             if card is None:

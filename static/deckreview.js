@@ -48,6 +48,16 @@ Vue.createApp({
     })
   },
   methods: {
+    deleteDeck() {
+      token = this.token
+      $.ajax({
+        url: `/deck/${this.deck.id}?auth_token=${token}`,
+        method: 'DELETE',
+        success: function(resp) {
+          window.location.href = "/?auth_token=" + token
+        }
+      })
+    },
     passThroughCards() {
       $('.cardpreview').empty()
       $('#cardprompt').val('')

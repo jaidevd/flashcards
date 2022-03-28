@@ -32,17 +32,17 @@
   </nav>
   <!-- navbar -->
   <div class="container py-4">
-    <div class="row pb">
+    <div class="row pb" id="app">
       <div class="col">
         <h2>Create a Card!</h2>
-        <form action='/card/' method="POST">
+        <form @submit="addCard">
           <div class="form-group">
             <label for="cardfront">Front Text</label>
-            <input type="text" class="form-control" name="cardfront" id="cardfront" placeholder="Text on the front of the card." required>
+            <input type="text" class="form-control" name="cardfront" id="cardfront" v-model="front" required>
           </div>
           <div class="form-group pt-3 pb-3">
             <label for="cardback">Back Text</label>
-            <input type="text" class="form-control" id="cardback" name="cardback" placeholder="Text on the back of the card." required>
+            <input type="text" class="form-control" id="cardback" name="cardback" v-model="back" required>
           </div>
           <div class="form-group pb-3">
             <div class="btn btn-light dropzone" id="image-dropzone"></div>
@@ -53,21 +53,20 @@
       </div>
       <div class="col">
         <h2>Preview</h2>
-        <div class="card" style="width: 18rem;">
+        <div class="card" style="width: 18rem" @click="flipCard">
           <div class="front">
             <img class="card-img-top" src="/static/placeholder.svg" alt="An Image Goes Here">
             <div class="card-body">
-              <p class="card-text card-text-front">Text on the front of the card.</p>
+              <p class="card-text card-text-front">{{ front }}</p>
               <div class="card-footer text-muted">
                   Click the card to flip it.
               </div>
             </div>
           </div>
-        <!-- back of the card -->
           <div class="back d-none">
             <img class="card-img-top" src="/static/placeholder.svg" alt="An Image Goes Here">
             <div class="card-body">
-              <p class="card-text card-text-back">Text on the back of the card.</p>
+              <p class="card-text card-text-back">{{ back }}</p>
               <div class="card-footer text-muted">
                   Click the card to flip it.
               </div>
@@ -88,22 +87,15 @@
   <script src="https://unpkg.com/dropzone@6.0.0-beta.1/dist/dropzone-min.js"></script>
   <script src="https://unpkg.com/vue@3"></script>
   <script src="/static/navbar.js"></script>
+  <script src="/static/card.js"></script>
   <script>
-    // Card listeners
-    $('#cardfront').change(function() {$('.card-text-front').text($(this).val())})
-    $('#cardback').change(function() {$('.card-text-back').text($(this).val())})
-    $(".card").click(function() {
-      $(this).toggleClass("flip")
-      $('.front').toggleClass('d-none')
-      $('.back').toggleClass('d-none')
-    })
-
+    let token = window.localStorage.getItem('flashcard-token')
     $('.dropzone').dropzone({ // camelized version of the `id`
-      url: '/upload/',
+      url: '/upload/?auth_token=' + token,
       dictDefaultMessage: "Upload an Image (optional)",
       init: function() {
         this.on('success', function(fileObj) {
-          $('.card-img-top').attr('src', '/upload/' + fileObj.name)
+          $('.card-img-top').attr('src', '/upload/' + fileObj.name + '?auth_token=' + token)
           $('#cardimg').val(fileObj.name)
         })
       }

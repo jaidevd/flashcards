@@ -56,18 +56,19 @@ Vue.createApp({
     registerCardListeners()
   },
   methods: {
-    createDeck() {
+    createDeck(e) {
       e.preventDefault()
+      token = this.token
       $.ajax({
-        url: '/deck/?auth_token=' + this.token,
+        url: '/deck/?auth_token=' + token,
         method: 'POST',
         data: JSON.stringify($('form').serializeArray()),
         processData: false,
         contentType: 'application/json',
         success: function(data) {
-          window.location.href = "/?auth_token=" + this.token
-        }.bind(this)
+          window.location.href = "/?auth_token=" + token
+        }
       })
     }
   }
-}).mount('.cardcol')
+}).mount('.container')
